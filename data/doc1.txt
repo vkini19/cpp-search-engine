@@ -1,0 +1,2 @@
+Computer science is the study of computation, information, and algorithms.
+Data structures organize information efficiently.

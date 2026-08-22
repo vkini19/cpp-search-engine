@@ -1,0 +1,2 @@
+Algorithms are step-by-step procedures for solving computational problems.
+Efficient algorithms are important for large datasets.

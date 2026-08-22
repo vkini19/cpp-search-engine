@@ -1,0 +1,1 @@
+Operating systems manage computer hardware and provide services to applications.
