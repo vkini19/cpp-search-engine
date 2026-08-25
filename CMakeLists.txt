@@ -12,3 +12,9 @@ add_executable(search_engine
 target_include_directories(search_engine PRIVATE
     include
 )
+
+add_executable(search_engine
+    src/main.cpp
+    src/document_loader.cpp
+    src/tokenizer.cpp
+)

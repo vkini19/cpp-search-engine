@@ -1,21 +1,31 @@
 #include <iostream>
 
 #include "document_loader.hpp"
+#include "tokenizer.hpp"
+
+using namespace std;
 
 int main() {
-    std::cout << "C++ Search Engine" << std::endl;
-    std::cout << "=================" << std::endl;
+    cout << "C++ Search Engine" << endl;
+    cout << "=================" << endl;
 
-    std::vector<Document> documents = loadDocuments("data");
+    vector<Document> documents = loadDocuments("data");
 
-    std::cout << "Documents indexed: "
+    cout << "Documents indexed: "
               << documents.size()
-              << std::endl;
+              << endl;
 
     for (const Document& document : documents) {
-        std::cout << "[" << document.id << "] "
+        cout << "[" << document.id << "] "
                   << document.filename
-                  << std::endl;
+                  << endl;
+    }
+
+    string text = "Computer Science is FUN!";
+    vector<string> tokens = tokenize(text);
+
+    for (const string& token : tokens) {
+        cout << token << endl;
     }
 
     return 0;
