@@ -10,6 +10,7 @@ add_executable(search_engine
     src/document_loader.cpp
     src/tokenizer.cpp
     src/inverted_index.cpp
+    src/ranker.cpp
 )
 
 target_include_directories(search_engine PRIVATE

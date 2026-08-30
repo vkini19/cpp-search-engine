@@ -4,12 +4,14 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 struct Document {
     int id;
-    std::string filename;
-    std::string content;
+    string filename;
+    string content;
 };
 
-std::vector<Document> loadDocuments(const std::string& directory);
+vector<Document> loadDocuments(const string& directory);
 
 #endif

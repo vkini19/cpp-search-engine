@@ -5,16 +5,25 @@
 #include <unordered_map>
 #include <vector>
 
-using namespace std;
-
 class InvertedIndex {
 private:
-    unordered_map<std::string, std::vector<int>> index;
+    // word -> (document ID -> frequency)
+    std::unordered_map<std::string,
+        std::unordered_map<int, int>> index;
 
 public:
     void add(const std::string& token, int documentId);
 
-    vector<int> search(const std::string& token) const;
+    std::vector<int> search(const std::string& token) const;
+
+    int getTermFrequency(
+        const std::string& token,
+        int documentId
+    ) const;
+
+    int getDocumentFrequency(
+        const std::string& token
+    ) const;
 };
 
 #endif
