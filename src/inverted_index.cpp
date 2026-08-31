@@ -1,16 +1,18 @@
 #include "inverted_index.hpp"
 
+using namespace std;
+
 void InvertedIndex::add(
-    const std::string& token,
+    const string& token,
     int documentId
 ) {
     index[token][documentId]++;
 }
 
-std::vector<int> InvertedIndex::search(
-    const std::string& token
+vector<int> InvertedIndex::search(
+    const string& token
 ) const {
-    std::vector<int> results;
+    vector<int> results;
 
     auto it = index.find(token);
 
@@ -24,7 +26,7 @@ std::vector<int> InvertedIndex::search(
 }
 
 int InvertedIndex::getTermFrequency(
-    const std::string& token,
+    const string& token,
     int documentId
 ) const {
     auto tokenIt = index.find(token);
@@ -44,7 +46,7 @@ int InvertedIndex::getTermFrequency(
 }
 
 int InvertedIndex::getDocumentFrequency(
-    const std::string& token
+    const string& token
 ) const {
     auto it = index.find(token);
 
@@ -53,4 +55,17 @@ int InvertedIndex::getDocumentFrequency(
     }
 
     return it->second.size();
+}
+
+void InvertedIndex::merge(const InvertedIndex& other){
+    for (const auto& tokenEntry : other.index) {
+        const string& token = tokenEntry.first;
+
+        for (const auto& documentEntry : tokenEntry.second) {
+            int documentId = documentEntry.first;
+            int frequency = documentEntry.second;
+
+            index[token][documentId] += frequency;
+        }
+    }
 }

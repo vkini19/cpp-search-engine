@@ -2,6 +2,9 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <chrono>
+#include <iomanip>
+#include <omp.h>
 
 #include "document_loader.hpp"
 #include "tokenizer.hpp"
@@ -15,10 +18,23 @@ int main() {
     cout << "=================" << endl;
 
     // Load documents
+    auto loadStart = chrono::high_resolution_clock::now();
+
     vector<Document> documents = loadDocuments("data");
+
+    auto loadEnd = chrono::high_resolution_clock::now();
+
+    chrono::duration<double> loadTime =
+        loadEnd - loadStart;
 
     cout << "Documents indexed: "
          << documents.size()
+         << endl;
+
+    cout << fixed << setprecision(6);
+    cout << "Document loading time: "
+         << loadTime.count() * 1000
+         << "ms"
          << endl;
 
     // Calculate document lengths
@@ -31,17 +47,54 @@ int main() {
         documentLengths.push_back(tokens.size());
     }
 
-    // Build inverted index
-    InvertedIndex index;
+    auto indexStart =
+    chrono::high_resolution_clock::now();
 
-    for (const Document& document : documents) {
-        vector<string> tokens =
-            tokenize(document.content);
+    int threadCount = omp_get_max_threads();
 
-        for (const string& token : tokens) {
-            index.add(token, document.id);
+    vector<InvertedIndex> localIndexes(threadCount);
+
+    #pragma omp parallel
+    {
+        int threadId = omp_get_thread_num();
+
+        #pragma omp for
+        for (int i = 0;
+            i < static_cast<int>(documents.size());
+            i++) {
+
+            vector<string> tokens =
+                tokenize(documents[i].content);
+
+            for (const string& token : tokens) {
+                localIndexes[threadId].add(
+                    token,
+                    documents[i].id
+                );
+            }
         }
     }
+
+    InvertedIndex index;
+
+    for (const InvertedIndex& localIndex : localIndexes) {
+        index.merge(localIndex);
+    }
+
+    auto indexEnd =
+        chrono::high_resolution_clock::now();
+
+    chrono::duration<double> indexTime =
+        indexEnd - indexStart;
+
+    cout << "Indexing time: "
+        << indexTime.count() * 1000
+        << "ms"
+        << endl;
+
+    cout << "Threads used: "
+        << threadCount
+        << endl;
 
     // Create BM25 ranker
     Ranker ranker(
@@ -61,7 +114,9 @@ int main() {
             break;
         }
 
-        // Tokenize query
+        auto queryStart =
+            chrono::high_resolution_clock::now();
+
         vector<string> queryTokens =
             tokenize(query);
 
@@ -71,11 +126,10 @@ int main() {
             continue;
         }
 
-        // Find documents containing first term
         vector<int> results =
             index.search(queryTokens[0]);
 
-        // AND search for additional terms
+        // AND search
         for (size_t i = 1;
              i < queryTokens.size();
              i++) {
@@ -99,12 +153,6 @@ int main() {
             results = intersection;
         }
 
-        if (results.empty()) {
-            cout << "No results found." << endl;
-            continue;
-        }
-
-        // Calculate BM25 scores
         vector<pair<int, double>> rankedResults;
 
         for (int documentId : results) {
@@ -119,7 +167,6 @@ int main() {
             );
         }
 
-        // Sort highest score first
         sort(
             rankedResults.begin(),
             rankedResults.end(),
@@ -128,19 +175,33 @@ int main() {
             }
         );
 
-        // Display results
-        cout << "\nResults:" << endl;
+        auto queryEnd =
+            chrono::high_resolution_clock::now();
 
-        for (const auto& result : rankedResults) {
-            int documentId = result.first;
-            double score = result.second;
+        chrono::duration<double> queryTime =
+            queryEnd - queryStart;
 
-            cout << "- "
-                 << documents[documentId].filename
-                 << " | BM25 Score: "
-                 << score
-                 << endl;
+        if (rankedResults.empty()) {
+            cout << "No results found." << endl;
+        } else {
+            cout << "\nResults:" << endl;
+
+            for (const auto& result : rankedResults) {
+                int documentId = result.first;
+                double score = result.second;
+
+                cout << "- "
+                     << documents[documentId].filename
+                     << " | BM25 Score: "
+                     << score
+                     << endl;
+            }
         }
+
+        cout << "Query time: "
+             << queryTime.count() * 1000
+             << "ms"
+             << endl;
     }
 
     cout << "\nGoodbye!" << endl;
